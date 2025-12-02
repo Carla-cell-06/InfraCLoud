@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudedu-app
+  namespace: cloudedu
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cloudedu
+  template:
+    metadata:
+      labels:
+        app: cloudedu
+    spec:
+      containers:
+        - name: cloudedu-app
+          image: carlaaa6/cloudedu-app:1.0
+          ports:
+            - containerPort: 5000
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: cloudedu-pvc

@@ -1,0 +1,58 @@
+---
+- hosts: cloudedu
+  become: yes
+  tasks:
+    - name: Actualizar paquetes
+      apt:
+        update_cache: yes
+
+    - name: Instalar dependencias básicas
+      apt:
+        name:
+          - curl
+          - wget
+          - docker.io
+          - apt-transport-https
+          - ca-certificates
+          - gnupg
+        state: present
+
+    - name: Habilitar Docker
+      systemd:
+        name: docker
+        enabled: yes
+        state: started
+
+    - name: Instalar kubectl
+      shell: |
+        curl -LO "https://dl.k8s.io/release/v1.30.0/bin/linux/amd64/kubectl"
+        chmod +x kubectl
+        mv kubectl /usr/local/bin/kubectl
+      args:
+        creates: /usr/local/bin/kubectl
+
+    - name: Instalar minikube
+      shell: |
+        curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+        chmod +x minikube
+        mv minikube /usr/local/bin/minikube
+      args:
+        creates: /usr/local/bin/minikube
+
+    - name: Iniciar Minikube
+      shell: |
+        minikube start --driver=docker --force
+      args:
+        chdir: /root
+
+
+    - name: Copiar manifiestos K8s a /root/k8s
+      copy:
+        src: ../k8s/
+        dest: /root/k8s/
+
+    - name: Desplegar manifiestos K8s
+      shell: |
+        kubectl apply -f /root/k8s/
+      args:
+        chdir: /root
